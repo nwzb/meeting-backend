@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nwzb.meeting_backend.mapper.BizMeetingMapper">
+
+    <select id="selectMeetingTrend" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$TrendData">
+        SELECT
+        DATE_FORMAT(create_time, '%Y-%m-%d') as date,
+        COUNT(*) as count,
+        IFNULL(SUM(duration), 0) as duration
+        FROM biz_meeting
+        <where>
+            user_id = #{userId}
+            <if test="startDate != null and startDate != ''">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY date
+        ORDER BY date ASC
+    </select>
+
+    <select id="selectSpeakerStats" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$PieData">
+        SELECT
+        CASE
+        WHEN speaker_count = 1 THEN '单人记录'
+        WHEN speaker_count = 2 THEN '双人对话'
+        WHEN speaker_count BETWEEN 3 AND 5 THEN '小型会议'
+        ELSE '大型研讨'
+        END as name,
+        COUNT(*) as value
+        FROM (
+        SELECT c.meeting_id, COUNT(DISTINCT c.speaker) as speaker_count
+        FROM biz_meeting_content c
+        INNER JOIN biz_meeting m ON c.meeting_id = m.id
+        <where>
+            m.user_id = #{userId}
+            <if test="startDate != null and startDate != ''">
+                AND m.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND m.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY c.meeting_id
+        ) t
+        GROUP BY name
+    </select>
+
+    <select id="searchGlobal" resultType="com.nwzb.meeting_backend.model.vo.GlobalSearchVO">
+        SELECT CAST(id AS CHAR) as id, 'MEETING' as type, title as title, ai_keywords as highlightContent, create_time as createTime
+        FROM biz_meeting
+        WHERE user_id = #{userId} AND (title LIKE #{keyword} OR ai_keywords LIKE #{keyword})
+    </select>
+
+    <select id="selectAllKeywords" resultType="java.lang.String">
+        SELECT ai_keywords
+        FROM biz_meeting
+        <where>
+            user_id = #{userId}
+            AND ai_keywords IS NOT NULL
+            AND ai_keywords != ''
+            <if test="startDate != null and startDate != ''">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="selectGlobalMeetingTrend" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$TrendData">
+        SELECT
+        DATE_FORMAT(create_time, '%Y-%m-%d') as date,
+        COUNT(*) as count,
+        IFNULL(SUM(duration), 0) as duration
+        FROM biz_meeting
+        <where>
+            <if test="startDate != null and startDate != ''">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY date
+        ORDER BY date ASC
+    </select>
+
+    <select id="selectGlobalSpeakerStats" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$PieData">
+        SELECT
+        CASE
+        WHEN speaker_count = 1 THEN '单人记录'
+        WHEN speaker_count = 2 THEN '双人对话'
+        WHEN speaker_count BETWEEN 3 AND 5 THEN '小型会议'
+        ELSE '大型研讨'
+        END as name,
+        COUNT(*) as value
+        FROM (
+        SELECT c.meeting_id, COUNT(DISTINCT c.speaker) as speaker_count
+        FROM biz_meeting_content c
+        INNER JOIN biz_meeting m ON c.meeting_id = m.id
+        <where>
+            <if test="startDate != null and startDate != ''">
+                AND m.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND m.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY c.meeting_id
+        ) t
+        GROUP BY name
+    </select>
+
+    <select id="selectGlobalAllKeywords" resultType="java.lang.String">
+        SELECT ai_keywords FROM biz_meeting
+        <where>
+            ai_keywords IS NOT NULL AND ai_keywords != ''
+            <if test="startDate != null and startDate != ''">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectGlobalResourceStats" resultType="com.nwzb.meeting_backend.model.vo.AdminOpsStatsVO$ResourceStats">
+        SELECT
+        IFNULL(AVG(asr_duration), 0) as avgAsrDuration,
+        IFNULL(AVG(llm_duration), 0) as avgLlmDuration
+        FROM biz_meeting
+        <where>
+            status = 4 AND asr_duration > 0
+            <if test="startDate != null and startDate != ''">
+                AND create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectMeetingLogsWithUser" resultType="com.nwzb.meeting_backend.model.vo.MeetingLogVO">
+        SELECT
+        m.*,
+        u.username
+        FROM biz_meeting m
+        LEFT JOIN sys_user u ON m.user_id = u.id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (
+                m.id LIKE CONCAT('%', #{keyword}, '%') OR
+                m.title LIKE CONCAT('%', #{keyword}, '%') OR
+                m.user_id LIKE CONCAT('%', #{keyword}, '%') OR
+                u.username LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        <if test="sortField != null and sortField != '' and sortOrder != null and sortOrder != ''">
+            ORDER BY ${sortField} ${sortOrder}
+        </if>
+        <if test="sortField == null or sortField == ''">
+            ORDER BY m.create_time DESC
+        </if>
+    </select>
+
+    <select id="selectTopicStats" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$PieData">
+        SELECT
+        IFNULL(t.name, '未分类') as name,
+        COUNT(m.id) as value
+        FROM biz_meeting m
+        LEFT JOIN sys_topic_library t ON m.topic_library_id = t.id
+        <where>
+            m.user_id = #{userId}
+            <if test="startDate != null and startDate != ''">
+                AND m.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND m.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY m.topic_library_id, t.name
+    </select>
+
+    <select id="selectGlobalTopicStats" resultType="com.nwzb.meeting_backend.model.vo.DashboardStatsVO$PieData">
+        SELECT
+        IFNULL(t.name, '未分类') as name,
+        COUNT(m.id) as value
+        FROM biz_meeting m
+        LEFT JOIN sys_topic_library t ON m.topic_library_id = t.id
+        <where>
+            <if test="startDate != null and startDate != ''">
+                AND m.create_time &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND m.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY m.topic_library_id, t.name
+    </select>
+</mapper>

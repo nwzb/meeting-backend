@@ -1,0 +1,75 @@
+# =============================================================
+# 1. 数据库配置 (MySQL 8.0+)
+# =============================================================
+spring:
+  application:
+    name: meeting-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/meetingdata?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    # 增加连接池基本配置，保证稳定性
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  # =============================================================
+  # 2. 文件上传限制 (大文件限制在 200MB 以内)
+  # =============================================================
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
+# =============================================================
+# 3. MyBatis-Plus 配置
+# =============================================================
+mybatis-plus:
+  # 只有在开发环境下开启 SQL 日志，部署时记得关闭
+  configuration:
+#    关掉SQL日志，专注看其它日志
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+    # 开启驼峰命名转换: audio_path -> audioPath
+    map-underscore-to-camel-case: true
+
+  # 简单的SQL找实体对应mapper即可，复杂SQL会去resources/mapper找
+  mapper-locations: classpath:mapper/*.xml
+#  global-config:
+#    db-config:
+#      # 逻辑删除配置
+#      logic-delete-field: deleted
+#      logic-delete-value: 1
+#      logic-not-delete-value: 0
+
+# =============================================================
+# 4. 服务端口
+# =============================================================
+server:
+  port: 8080
+
+# =============================================================
+# 5. AI 资源精算专栏
+# =============================================================
+python:
+  # Java 侧的并发请求做队列排队
+  # Python 服务的基础地址
+  api-url: http://127.0.0.1:8000
+  upload-api: ${python.api-url}/api/v1/upload
+  # 限制并发，防止显存爆炸
+  max-concurrency: 1
+
+file:
+  # 建议根据你的操作系统修改。Windows 示例: D:/meeting_uploads/
+  # 记得路径最后带上斜杠 /
+  upload-path: C:/Users/86158/Desktop/Meeting_Project/meeting_uploads/
+
+
+# =============================================================
+# 6. 安全配置 (JWT 密钥等)
+# =============================================================
+auth:
+  jwt:
+    secret: NWZB_MEETING_SECRET_KEY_2026
+    expire: 604800 # 7天，单位秒

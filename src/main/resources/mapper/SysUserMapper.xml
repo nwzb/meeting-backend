@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nwzb.meeting_backend.mapper.SysUserMapper">
+
+    <select id="selectUserWithStatsPage" resultType="com.nwzb.meeting_backend.model.vo.UserAdminVO">
+        SELECT
+        u.id, u.username, u.avatar, u.role, u.create_time AS createTime,
+        COUNT(m.id) AS totalMeetingCount,
+        SUM(IF(YEARWEEK(m.create_time, 1) = YEARWEEK(NOW(), 1), 1, 0)) AS weekMeetingCount,
+
+        SUM(IFNULL(m.duration, 0)) AS totalAudioDuration,
+        SUM(IF(YEARWEEK(m.create_time, 1) = YEARWEEK(NOW(), 1), IFNULL(m.duration, 0), 0)) AS weekAudioDuration,
+
+        SUM(IFNULL(m.asr_duration, 0) + IFNULL(m.llm_duration, 0)) AS totalAiDuration,
+        SUM(IF(YEARWEEK(m.create_time, 1) = YEARWEEK(NOW(), 1), IFNULL(m.asr_duration, 0) + IFNULL(m.llm_duration, 0), 0)) AS weekAiDuration
+        FROM sys_user u
+        LEFT JOIN biz_meeting m ON u.id = m.user_id
+        <where>
+            <if test="username != null and username != ''">
+                AND u.username LIKE CONCAT('%', #{username}, '%')
+            </if>
+        </where>
+        GROUP BY u.id
+        <choose>
+            <when test="orderBy != null and orderBy != ''">
+                ORDER BY ${orderBy} ${isAsc ? 'ASC' : 'DESC'}
+            </when>
+            <otherwise>
+                ORDER BY u.create_time DESC
+            </otherwise>
+        </choose>
+    </select>
+
+</mapper>

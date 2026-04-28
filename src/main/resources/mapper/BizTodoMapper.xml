@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nwzb.meeting_backend.mapper.BizTodoMapper">
+
+    <select id="searchGlobal" resultType="com.nwzb.meeting_backend.model.vo.GlobalSearchVO">
+        SELECT
+            CAST(id AS CHAR) AS id,
+            'TODO' AS type,
+            title AS title,
+            CONCAT('状态: ', CASE WHEN status = 1 THEN '已完成' ELSE '进行中' END) AS highlightContent,
+            create_time AS createTime
+        FROM biz_todo
+        WHERE user_id = #{userId}
+          AND title LIKE #{keyword}
+    </select>
+
+</mapper>
