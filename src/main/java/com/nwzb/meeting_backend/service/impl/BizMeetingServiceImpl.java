@@ -76,9 +76,8 @@ public class BizMeetingServiceImpl extends ServiceImpl<BizMeetingMapper, BizMeet
         Page<BizMeeting> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<BizMeeting> wrapper = new LambdaQueryWrapper<>();
 
-        // 2. 基础条件：只能看自己的，且没被违规屏蔽的
-        wrapper.eq(BizMeeting::getUserId, userId)
-                .ne(BizMeeting::getAuditStatus, 2);
+        // 2. 基础条件：只能看自己的（已屏蔽的会议也会显示，但前端会限制操作）
+        wrapper.eq(BizMeeting::getUserId, userId);
 
         // 3. 搜索条件
         if (org.springframework.util.StringUtils.hasText(keyword)) {

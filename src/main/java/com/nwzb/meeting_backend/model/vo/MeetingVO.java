@@ -19,5 +19,6 @@ public class MeetingVO {
     private Long duration;
     private Integer status;
     private Integer auditStatus;
+    private String auditReason;
     private LocalDateTime createTime;
 }
