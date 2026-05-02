@@ -73,7 +73,7 @@ public class UserController {
     @PutMapping("/ban/{id}")
     public Result<String> toggleBan(@PathVariable Long id, @RequestParam boolean isBan) {
         Integer currentRole = SecurityUtils.getCurrentUserRole();
-        // 拦截：普通用户(1)和审计管理(3)无权操作
+        // 拦截：普通用户(1)和审查管理(3)无权操作
         if (currentRole == null || currentRole == 1 || currentRole == 3) {
             return Result.error("403, 无权操作");
         }

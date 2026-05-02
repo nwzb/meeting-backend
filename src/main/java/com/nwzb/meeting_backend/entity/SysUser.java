@@ -21,7 +21,7 @@ public class SysUser {
     private String password;
 
     /**
-     * 角色: 1-普通用户, 2-运维管理员, 3-审计管理员, 9-超级管理员
+     * 角色: 1-普通用户, 2-运维管理员, 3-审查管理员, 9-超级管理员
      */
     private Integer role;
 

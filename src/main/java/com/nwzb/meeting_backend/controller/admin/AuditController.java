@@ -12,7 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 审计管理 - 会议审计控制器
+ * 审查管理 - 会议审查控制器
  */
 @RestController
 @RequestMapping("/api/admin/audit/meeting")
@@ -22,7 +22,7 @@ public class AuditController {
     private BizMeetingService bizMeetingService;
 
     /**
-     * 分页获取所有会议（供审计使用，不区分用户）
+     * 分页获取所有会议（供审查使用，不区分用户）
      */
     @GetMapping("/list")
     public Result<Page<MeetingAuditVO>> getAuditMeetingList(
@@ -39,7 +39,7 @@ public class AuditController {
     }
 
     /**
-     * 更改会议审计状态（违规屏蔽 / 归档）
+     * 更改会议审查状态（违规屏蔽 / 归档）
      */
     @PostMapping("/status")
     public Result<?> changeMeetingAuditStatus(@RequestBody @Validated MeetingAuditDTO dto) {

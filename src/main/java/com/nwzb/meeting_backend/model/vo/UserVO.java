@@ -18,7 +18,7 @@ public class UserVO {
 
     private String username;
 
-    private Integer role; // 1-用户, 2-运维, 3-审计, 9-超管
+    private Integer role; // 1-用户, 2-运维, 3-审查, 9-超管
 
     private String avatar;
 

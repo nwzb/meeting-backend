@@ -1,12 +1,12 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. 用户表：区分运维、审计、普通用户
+-- 1. 用户表：区分运维、审查、普通用户
 DROP TABLE IF EXISTS `sys_user`;
 CREATE TABLE `sys_user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `username` varchar(50) NOT NULL COMMENT '用户名',
   `password` varchar(100) NOT NULL COMMENT '加密密码',
-  `role` tinyint(4) DEFAULT '1' COMMENT '角色: 1-普通用户, 2-运维管理员, 3-审计管理员, 9-超级管理员 0-封禁用户',
+  `role` tinyint(4) DEFAULT '1' COMMENT '角色: 1-普通用户, 2-运维管理员, 3-审查管理员, 9-超级管理员 0-封禁用户',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -30,13 +30,13 @@ INSERT INTO `sys_user` (
          );
 
 
--- 2. 热词/敏感词表：给AI做修正和审计用
+-- 2. 热词/敏感词表：给AI做修正和审查用
 DROP TABLE IF EXISTS `sys_hot_word`;
 CREATE TABLE `sys_hot_word` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `library_id` bigint(20) NOT NULL DEFAULT '1' COMMENT '所属词库ID',
   `word` varchar(100) NOT NULL COMMENT '热词/敏感词',
-  `type` tinyint(4) DEFAULT '1' COMMENT '类型: 1-热词修正(ASR/LLM用), 2-敏感词(审计屏蔽用)',
+  `type` tinyint(4) DEFAULT '1' COMMENT '类型: 1-热词修正(ASR/LLM用), 2-敏感词(审查屏蔽用)',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_library` (`library_id`)
@@ -71,8 +71,8 @@ CREATE TABLE `biz_meeting` (
   -- 核心字段1：AI处理流程状态 (机器管)
   `status` tinyint(4) DEFAULT '0' COMMENT 'AI流程状态: 0-上传中, 1-排队中, 2-ASR识别中, 3-LLM总结中, 4-完成, 9-失败',
   
-  -- 核心字段2：审计管控状态 (人管)
-  `audit_status` tinyint(4) DEFAULT '0' COMMENT '审计管控状态: 0-正常, 1-已归档(只读), 2-违规屏蔽(前端隐藏内容)',
+  -- 核心字段2：审查管控状态 (人管)
+  `audit_status` tinyint(4) DEFAULT '0' COMMENT '审查管控状态: 0-正常, 1-已归档(只读), 2-违规屏蔽(前端隐藏内容)',
   `audit_reason` varchar(255) DEFAULT NULL COMMENT '屏蔽原因',
   `sensitive_word_count` INT DEFAULT 0 COMMENT '命中的敏感词总数',
 

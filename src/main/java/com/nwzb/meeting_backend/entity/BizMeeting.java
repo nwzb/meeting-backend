@@ -32,7 +32,7 @@ public class BizMeeting {
     private Integer status;
 
     /**
-     * 审计管控状态: 0-正常, 1-已归档(只读), 2-违规屏蔽(前端隐藏内容)
+     * 审查管控状态: 0-正常, 1-已归档(只读), 2-违规屏蔽(前端隐藏内容)
      */
     private Integer auditStatus;
 

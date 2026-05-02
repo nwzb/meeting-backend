@@ -16,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 审计管理 - 词库与热词控制器
+ * 审查管理 - 词库与热词控制器
  * 拦截器或Security层需确保只有 role=3 或 role=9 可访问此路径 (/admin/audit/**)
  */
 @RestController

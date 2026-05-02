@@ -61,7 +61,7 @@ public interface BizMeetingService extends IService<BizMeeting> {
     // 全局会议日志的分页查询方法 (供运维使用，不区分用户）
     IPage<MeetingLogVO> getGlobalMeetingLogs(Integer current, Integer size, String keyword, String sortField, String sortOrder);
 
-    // 分页获取所有会议（供审计使用，不区分用户）
+    // 分页获取所有会议（供审查使用，不区分用户）
     Page<MeetingAuditVO> getAuditMeetingPage(Page<BizMeeting> page, Integer auditStatus, String keyword, String sortField, Boolean isAsc);
 
     @Transactional(rollbackFor = Exception.class)

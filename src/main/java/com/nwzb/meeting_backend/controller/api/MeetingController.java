@@ -187,21 +187,21 @@ public class MeetingController {
 
         // 获取当前用户信息，判断角色
         SysUser currentUser = sysUserService.getById(currentUserId);
-        Integer role = currentUser.getRole(); // 角色: 1-用户, 2-运维, 3-审计, 9-超管
-        log.info("审计检查 - 访问者ID: {}, 访问者角色: {}, 会议所属人ID: {}", currentUserId, role, meeting.getUserId());
+        Integer role = currentUser.getRole(); // 角色: 1-用户, 2-运维, 3-审查, 9-超管
+        log.info("审查检查 - 访问者ID: {}, 访问者角色: {}, 会议所属人ID: {}", currentUserId, role, meeting.getUserId());
 
-        // 判定：如果是审计或超管，拥有“豁免权”
-        boolean hasAuditPrivilege = (role != null && (role == 3 || role == 9));
+        // 判定：如果是审查或超管，拥有"豁免权"
+        boolean hasReviewPrivilege = (role != null && (role == 3 || role == 9));
 
         // 校验：如果不具有豁免权，且不是本人，才拦截
-        if (!hasAuditPrivilege && !meeting.getUserId().equals(currentUserId)) {
+        if (!hasReviewPrivilege && !meeting.getUserId().equals(currentUserId)) {
             log.warn("鉴权失败：用户 {} 无权访问会议 {}", currentUserId, id);
             throw new CustomException("无权限访问该会议内容");
         }
 
-        // 审计状态校验：审计/超管自己看自己的屏蔽会议，或者看别人的屏蔽会议，也应当允许（因为要审查）
+        // 审查状态校验：审查/超管自己看自己的屏蔽会议，或者看别人的屏蔽会议，也应当允许（因为要审查）
         // 只有普通用户看已被屏蔽的会议时，才拦截
-        if (!hasAuditPrivilege && meeting.getAuditStatus() != null && meeting.getAuditStatus() == 2) {
+        if (!hasReviewPrivilege && meeting.getAuditStatus() != null && meeting.getAuditStatus() == 2) {
             throw new CustomException("该会议内容涉嫌违规，已被屏蔽");
         }
         // ================== 🌟 核心越权校验逻辑结束 ==================
