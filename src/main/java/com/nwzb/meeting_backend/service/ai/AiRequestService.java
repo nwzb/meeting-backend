@@ -244,7 +244,10 @@ public class AiRequestService {
             // 2. 将切片转为 JSON 字符串
             String chunksJson = objectMapper.writeValueAsString(contents);
 
-            // 3. 构建 JSON 格式请求体 (FastAPI 的 BaseModel 需要 application/json)
+            // 3. 构建会议指纹文本（名称 + 时长 + 关键词 + 摘要 + 待办）
+            String fingerprintText = buildFingerprintText(meeting);
+
+            // 4. 构建 JSON 格式请求体 (FastAPI 的 BaseModel 需要 application/json)
             String url = PYTHON_API_URL + "/rag/build";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -252,6 +255,7 @@ public class AiRequestService {
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("meeting_id", String.valueOf(meeting.getId()));
             requestBody.put("chunks_json", chunksJson);
+            requestBody.put("fingerprint_text", fingerprintText);
 
             HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
 
@@ -278,8 +282,9 @@ public class AiRequestService {
      * ======== 发起 RAG 全局问答请求 (前端实时交互) ========
      * @param question 用户提问
      * @param meetingList 包含 meetingId, meetingName, meetingTime 的会议元数据列表
+     * @param deepSearch 是否启用超深度检索（跳过一级粗排）
      */
-    public Result<?> sendRagAskRequest(String question, List<Map<String, Object>> meetingList) {
+    public Result<?> sendRagAskRequest(String question, List<Map<String, Object>> meetingList, boolean deepSearch) {
         String url = PYTHON_API_URL + "/rag/ask";
 
         try {
@@ -288,11 +293,12 @@ public class AiRequestService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            Map<String, String> requestBody = new HashMap<>();
+            Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("question", question);
             requestBody.put("meeting_list_json", meetingListJson);
+            requestBody.put("deep_search", deepSearch);
 
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
             log.info(">>> 发起 RAG 问答，提问：[{}]，关联会议数：{}", question, meetingList.size());
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
@@ -320,5 +326,38 @@ public class AiRequestService {
             log.error("RAG 问答请求失败", e);
             return Result.error("智能问答引擎响应失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 构建会议指纹文本：拼接名称、时长、关键词、摘要、待办等高维核心信息
+     */
+    private String buildFingerprintText(BizMeeting meeting) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("会议名称：").append(meeting.getTitle() != null ? meeting.getTitle() : "未知会议");
+
+        Long duration = meeting.getDuration();
+        if (duration != null && duration > 0) {
+            sb.append(" | 时长：").append(duration / 60).append("分钟");
+        } else {
+            sb.append(" | 时长：未知");
+        }
+
+        if (meeting.getAiKeywords() != null && !meeting.getAiKeywords().isEmpty()) {
+            sb.append(" | 关键词：").append(meeting.getAiKeywords());
+        }
+
+        if (meeting.getFullSummary() != null && !meeting.getFullSummary().isEmpty()) {
+            String summary = meeting.getFullSummary();
+            if (summary.length() > 200) {
+                summary = summary.substring(0, 200);
+            }
+            sb.append(" | 摘要：").append(summary.replace("|", " ").replace("\n", " "));
+        }
+
+        if (meeting.getAiTodos() != null && !meeting.getAiTodos().isEmpty()) {
+            sb.append(" | 待办事项：").append(meeting.getAiTodos());
+        }
+
+        return sb.toString();
     }
 }

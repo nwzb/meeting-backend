@@ -80,11 +80,13 @@ public class DashboardController {
      * ======== 全局 RAG 超级会议助手问答接口 ========
      */
     @PostMapping("/rag/ask")
-    public Result<?> askRag(@RequestBody Map<String, String> payload) {
-        String question = payload.get("question");
+    public Result<?> askRag(@RequestBody Map<String, Object> payload) {
+        String question = (String) payload.get("question");
         if (question == null || question.trim().isEmpty()) {
             return Result.error("提问内容不能为空");
         }
+
+        boolean deepSearch = Boolean.TRUE.equals(payload.get("deepSearch"));
 
         // 1. 第一道防线：尝试在 Java 端抢占 AI 引擎显存锁
         if (!aiTaskQueueManager.tryAcquireLockForInstantTask()) {
@@ -96,7 +98,6 @@ public class DashboardController {
             Long currentUserId = SecurityUtils.getCurrentUserId();
 
             // 2. 查库：获取该用户所有的已完成且已向量化的会议 (is_vectorized = 1)
-            // 注意：这里假设你的 BizMeeting 实体中会议标题字段叫 title，如果是 name 等请自行修改
             List<BizMeeting> vectorizedMeetings = bizMeetingService.list(
                     new LambdaQueryWrapper<BizMeeting>()
                             .eq(BizMeeting::getUserId, currentUserId)
@@ -118,7 +119,7 @@ public class DashboardController {
             }
 
             // 4. 发送 HTTP 请求并等待大模型返回 (同步阻塞，交由底层的超时配置守护)
-            return aiRequestService.sendRagAskRequest(question, meetingList);
+            return aiRequestService.sendRagAskRequest(question, meetingList, deepSearch);
 
         } catch (Exception e) {
             log.error("RAG 全局问答接口执行异常", e);
